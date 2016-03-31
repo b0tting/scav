@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>SCAVHUNT!</title>
+
+    <!-- Bootstrap -->
+    <link href="/static/css/bootstrap.min.css" rel="stylesheet">
+
+      <style>
+
+          .hiddenskip {
+    position: absolute;
+    top: 0px;
+    right: 0px;
+              width: 20%;
+              height:15%;
+    text-align: center;
+
+    font-size: x-large;
+
+          }
+
+.stepcounter{
+    position: absolute;
+    background-color: white;
+    bottom: 0px;
+    left: 0px;
+    right: 0px;
+    margin-right: 5px;
+    margin-left: 5px;
+    text-align: center;
+
+    font-size: x-large;
+}
+      </style>
+
+  </head>
+  <body>
+  <div class="hiddenskip" onClick="getNextLocation(nextLocation.next_rank)"></div>
+  <div id="debugfield"></div>
+    <div id="stepcounter" class="well stepcounter"><span id="demo">Waiting..</span></div>
+
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="/static/js/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="/static/js/bootstrap.min.js"></script>
+    <script src="/static/js/jquery.backstretch.min.js"></script>
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+      <script>
+var x = document.getElementById("demo");
+var nextLocation = null
+var loading = false;
+var watchPositionID = null
+var debug = window.location.search.indexOf("debug") > -1
+var stepwidth = 14
+function startStepping() {
+    if (navigator.geolocation) {
+        watchPositionID = navigator.geolocation.watchPosition(showSteps, function error(msg){}, {maximumAge:0, timeout:3000, enableHighAccuracy: true});
+    } else {
+        x.innerHTML = "Geolocation is not supported by this browser.";
+    }
+}
+
+function stopStepping() {
+    navigator.geolocation.clearWatch(watchPositionID);
+}
+
+$(document).bind("ajaxSend", function(){
+   loading = true;
+ }).bind("ajaxComplete", function(){
+   loading = false;
+});
+
+function getNextLocation(currentRank) {
+    if (!currentRank) {
+        currentRank = 0
+    }
+    $.backstretch("/static/locations/loading.gif",{fade: 800})
+    nextLocation = null
+    $.getJSON( "next/"+ currentRank, function( data ) {
+        nextLocation = data;
+        $.backstretch(nextLocation.imgUrl, {fade: 800})
+    });
+
+}
+
+function showSteps(position) {
+    var x = document.getElementById("demo");
+    if(!loading) {
+        kms = getDistanceFromLatLonInKm(position.coords.latitude, position.coords.longitude, nextLocation.next_lat, nextLocation.next_long)
+        steps = Math.floor(kms * 1000 * 2)
+
+        if(nextLocation.next_rank == "-1") {
+            stopStepping()
+            x.innerHTML = "GOOD JOB!";
+        } else if(steps <= stepwidth) {
+            getNextLocation(nextLocation.next_rank)
+            x.innerHTML = "Next!";
+        } else {
+            if(debug) {
+                var debugfield = document.getElementById("debugfield");
+                debugfield.style.backgroundColor = "white"
+                debugfield.innerHTML = "STEPS DIFF: " + steps + "<br>STEP ACCURACY " + stepwidth + "<BR>LAT " + position.coords.latitude + "<br>LONG " + position.coords.longitude + "<br>KMS " + kms + "<br>GOAL LAT " + nextLocation.next_lat + "<br>GOAL LONG " + nextLocation.next_long;
+            }
+            x.innerHTML = (steps - stepwidth) + "<img src='/static/locations/steps.png' height='24px'>";
+        }
+    } else {
+        x.innerHTML = "Loading.."
+    }
+}
+
+function getDistanceFromLatLonInKm(lat1,lon1,lat2,lon2) {
+  var R = 6371; // Radius of the earth in km
+  var dLat = deg2rad(lat2-lat1);  // deg2rad below
+  var dLon = deg2rad(lon2-lon1);
+  var a =
+    Math.sin(dLat/2) * Math.sin(dLat/2) +
+    Math.cos(deg2rad(lat1)) * Math.cos(deg2rad(lat2)) *
+    Math.sin(dLon/2) * Math.sin(dLon/2)
+    ;
+  var c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  var d = R * c; // Distance in km
+  return d;
+}
+
+function deg2rad(deg) {
+  return deg * (Math.PI/180)
+}
+
+getNextLocation()
+startStepping()
+</script>
+  </body>
+</html>
