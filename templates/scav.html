@@ -12,17 +12,15 @@
 
       <style>
 
-          .hiddenskip {
+.hiddenskip {
     position: absolute;
     top: 0px;
     right: 0px;
-              width: 20%;
-              height:15%;
+    width: 20%;
+    height:15%;
     text-align: center;
-
     font-size: x-large;
-
-          }
+}
 
 .stepcounter{
     position: absolute;
@@ -33,7 +31,6 @@
     margin-right: 5px;
     margin-left: 5px;
     text-align: center;
-
     font-size: x-large;
 }
       </style>
@@ -49,14 +46,14 @@
     <!-- Include all compiled plugins (below), or include individual files as needed -->
     <script src="/static/js/bootstrap.min.js"></script>
     <script src="/static/js/jquery.backstretch.min.js"></script>
-    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-      <script>
+  <script>
 var x = document.getElementById("demo");
 var nextLocation = null
 var loading = false;
 var watchPositionID = null
 var debug = window.location.search.indexOf("debug") > -1
+
+// Accuracy value, higher = easier
 var stepwidth = 14
 function startStepping() {
     if (navigator.geolocation) {
@@ -70,6 +67,7 @@ function stopStepping() {
     navigator.geolocation.clearWatch(watchPositionID);
 }
 
+// Use a generic loading screen if anything ajax related is launched
 $(document).bind("ajaxSend", function(){
    loading = true;
  }).bind("ajaxComplete", function(){
@@ -89,25 +87,35 @@ function getNextLocation(currentRank) {
 
 }
 
+// This function is run every time the client changes location
 function showSteps(position) {
     var x = document.getElementById("demo");
+    // First, check if we are not loading a new location
     if(!loading) {
-        kms = getDistanceFromLatLonInKm(position.coords.latitude, position.coords.longitude, nextLocation.next_lat, nextLocation.next_long)
-        steps = Math.floor(kms * 1000 * 2)
-
+        // So, it could be that between steps the next location finished
+        // loading and it turned out to be the final location! Done!
         if(nextLocation.next_rank == "-1") {
             stopStepping()
             x.innerHTML = "GOOD JOB!";
-        } else if(steps <= stepwidth) {
-            getNextLocation(nextLocation.next_rank)
-            x.innerHTML = "Next!";
         } else {
-            if(debug) {
-                var debugfield = document.getElementById("debugfield");
-                debugfield.style.backgroundColor = "white"
-                debugfield.innerHTML = "STEPS DIFF: " + steps + "<br>STEP ACCURACY " + stepwidth + "<BR>LAT " + position.coords.latitude + "<br>LONG " + position.coords.longitude + "<br>KMS " + kms + "<br>GOAL LAT " + nextLocation.next_lat + "<br>GOAL LONG " + nextLocation.next_long;
+            // Calculate the number of kilometers between the current position and the goal
+            kms = getDistanceFromLatLonInKm(position.coords.latitude, position.coords.longitude, nextLocation.next_lat, nextLocation.next_long)
+            steps = Math.floor(kms * 1000 * 2)
+
+            // If the number of steps is close enough to the goal, 
+            // load the next location. Otherwise, just update the
+            // number of steps remaining
+            if(steps <= stepwidth) {
+                getNextLocation(nextLocation.next_rank)
+                x.innerHTML = "Next!";
+            } else {
+                if(debug) {
+                    var debugfield = document.getElementById("debugfield");
+                    debugfield.style.backgroundColor = "white"
+                    debugfield.innerHTML = "STEPS DIFF: " + steps + "<br>STEP ACCURACY " + stepwidth + "<BR>LAT " + position.coords.latitude + "<br>LONG " + position.coords.longitude + "<br>KMS " + kms + "<br>GOAL LAT " + nextLocation.next_lat + "<br>GOAL LONG " + nextLocation.next_long;
+                }
+                x.innerHTML = (steps - stepwidth) + "<img src='/static/locations/steps.png' height='24px'>";
             }
-            x.innerHTML = (steps - stepwidth) + "<img src='/static/locations/steps.png' height='24px'>";
         }
     } else {
         x.innerHTML = "Loading.."
@@ -132,7 +140,10 @@ function deg2rad(deg) {
   return deg * (Math.PI/180)
 }
 
+// Init the first location
 getNextLocation()
+
+// Start monitoring the client position for changes
 startStepping()
 </script>
   </body>
