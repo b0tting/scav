@@ -4,7 +4,7 @@ A simple scavenger hunt browser game. Players use a mobile device as a client, t
 
 There's no session management or such. I've added a hidden button on the top-right of the screen to skip to the next location. You can also add a ?debug parameter to the URL to get full debug information on location, calculated distances etcetera. 
 
-!["Never mind those 10.000 steps, screenshot taken while 5 kilometers away or so"](https://raw.githubusercontent.com/b0tting/scav/blob/master/screenshots/scav.png)
+!["Never mind those 10.000 steps, screenshot taken while 5 kilometers away or so"](https://github.com/b0tting/scav/blob/master/screenshots/scav.png?raw=true)
 
 ## Installation
 This game uses Flask, so: 
